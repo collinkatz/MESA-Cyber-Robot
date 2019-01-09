@@ -21,3 +21,5 @@ In this project the Python is used to program a virtual robot to navigate throug
  -  Coming
  - 
 
+##Schedule
+ - 
