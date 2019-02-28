@@ -22,6 +22,7 @@ def control_robot(robot):
     # Setting up movement functions
     def step_north():
         if robotProperties.CurrentFacingDirection == 3: # if the direction it is facing is South
+            #this could just be step backwards
             robot.turn_left()
             robot.turn_left()
         elif robotProperties.CurrentFacingDirection == 4: # if the direction it is facing is West
@@ -36,6 +37,8 @@ def control_robot(robot):
 
     def step_south():
         if robotProperties.CurrentFacingDirection == 1: # if the direction it is facing is North
+        #this could just be step backwards
+
             robot.turn_left()
             robot.turn_left()
         elif robotProperties.CurrentFacingDirection == 4: # if the direction it is facing is West
