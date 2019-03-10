@@ -19,7 +19,7 @@ class robotInheritence:
 
 class node:
 
-    def __init__(self, position, pathData):
+    def __init__(self, position, retreatNode, pathData):
         """ Create a new node at position """
         self.nodePosition = position # [x, y] will be a table
 
@@ -35,8 +35,9 @@ class node:
         self.Paths["South"] = pathData[1]
         self.Paths["West"] = pathData[2]
         self.Paths["East"] = pathData[3]
-        
+
         self.parentNode = None
+        self.parentNode = retreatNode
 
 def control_robot(robot):
 
@@ -99,19 +100,28 @@ def control_robot(robot):
         robot.step_forward(distance) # Step forward after now facing East
         robotProperties.currentPosition[0] = robotProperties.currentPosition[0] + 1 # Change the current X position by 1
 
-    def make_node(position, facingDirection, distancefromWalls):
+    def make_node(position, facingDirection, retreatNode, distancefromWalls):
         if facingDirection == 1: # if the direction it is facing is North
             Northdistance = distancefromWalls[0]
             Southdistance = "ParentDirection"
             Westdistance = distancefromWalls[2]
             Eastdistance = distancefromWalls[1]
         elif facingDirection == 3: # if the direction it is facing is South
-            pass
+            Northdistance = "ParentDirection"
+            Southdistance = distancefromWalls[0]
+            Westdistance = distancefromWalls[1]
+            Eastdistance = distancefromWalls[2]
         elif facingDirection == 4: # if the direction it is facing is West
-            pass
+            Northdistance = distancefromWalls[1]
+            Southdistance = distancefromWalls[2]
+            Westdistance = distancefromWalls[0]
+            Eastdistance = "ParentDirection"
         elif facingDirection == 2: # if the direction it is facing is East
-            pass
-        robotNode = node(position, [Northdistance, Southdistance, Westdistance, Eastdistance])
+            Northdistance = distancefromWalls[2]
+            Southdistance = distancefromWalls[1]
+            Westdistance = "ParentDirection"
+            Eastdistance = distancefromWalls[0]
+        robotNode = node(position, retreatNode, [Northdistance, Southdistance, Westdistance, Eastdistance])
         robotProperties.nodeDict[repr(position)] = robotNode
 
 
@@ -123,9 +133,9 @@ def control_robot(robot):
     packets = robot.sense_packets()
     print(packets)
     
-    make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
-    print( robotProperties.nodeDict[repr([0,0])].Paths["West"] )
+    make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
     step_north(1)
+    robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
     
 
 
