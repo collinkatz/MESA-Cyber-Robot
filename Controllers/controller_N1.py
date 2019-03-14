@@ -16,25 +16,42 @@ class robotInheritence:
     currentPosition = [0, 0]
     CurrentNode = None
     nodeDict = {}
+    seekingdirection = 1
 
 class node:
 
     def __init__(self, position, retreatNode, pathData):
         """ Create a new node at position """
         self.nodePosition = position # [x, y] will be a table
-
+        self.numdeadpaths = 0
+        self.retreatDirection = ""
         self.Paths = {"North": False, "South": False, "West": False, "East": False}
+
         for i in range(0, len(pathData)):
             if pathData[i] > 0:
                 pathData[i] = "Available"
             elif pathData[i] == 0:
                 pathData[i] = "NoPath"
+                self.numdeadpaths = self.numdeadpaths + 1
             else:
+                if i == 0:
+                    self.retreatDirection = "North"
+                elif i == 1:
+                    self.retreatDirection = "South"
+                elif i == 2:
+                    self.retreatDirection = "West"
+                elif i == 3:
+                    self.retreatDirection = "East"
                 pass # Keep pathdata as what it was when it was passed
+            
         self.Paths["North"] = pathData[0]
+        self.Paths["1"] = pathData[0]
         self.Paths["South"] = pathData[1]
+        self.Paths["3"] = pathData[1]
         self.Paths["West"] = pathData[2]
+        self.Paths["4"] = pathData[2]
         self.Paths["East"] = pathData[3]
+        self.Paths["2"] = pathData[3]
 
         self.parentNode = None
         self.parentNode = retreatNode
@@ -129,15 +146,64 @@ def control_robot(robot):
 
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ##############################################################################################
-
     packets = robot.sense_packets()
     print(packets)
-    
-    make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
-    step_north(1)
-    robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
-    
 
+    #--Initilization of robot node system--#
+    make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
+    robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+    ###########
+
+    #--Depth first search logic--#
+    while True:
+        print(len(robotProperties.nodeDict))
+        if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
+            print("node here")
+            robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+        else:
+            print("Make node here" + repr(robotProperties.currentPosition))
+            make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
+            robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+
+        if robotProperties.CurrentNode.Paths[str(robotProperties.seekingdirection)] == "Available":
+            print("My seeking direction is available" + str(robotProperties.seekingdirection))
+            if robotProperties.seekingdirection == 1:
+                step_north(1)
+            elif robotProperties.seekingdirection == 3:
+                step_south(1)
+            elif robotProperties.seekingdirection == 4:
+                step_west(1)
+            elif robotProperties.seekingdirection == 2:
+                step_east(1)
+            robotProperties.CurrentNode.Paths[str(robotProperties.seekingdirection)] = "Choosen"
+            robotProperties.CurrentNode.numdeadpaths = robotProperties.CurrentNode.numdeadpaths + 1
+        else:
+            if robotProperties.seekingdirection == 1:
+                print("seek a different direction 1")
+                robotProperties.seekingdirection = 2
+            elif robotProperties.seekingdirection == 3:
+                print("seek a different direction 3")
+                robotProperties.seekingdirection = 4
+            elif robotProperties.seekingdirection == 4:
+                print("seek a different direction 4")
+                robotProperties.seekingdirection = 1
+            elif robotProperties.seekingdirection == 2:
+                print("seek a different direction 2")
+                robotProperties.seekingdirection = 3
+            
+            if robotProperties.CurrentNode.numdeadpaths >= 3:
+                print("Dont do this")
+                if robotProperties.CurrentNode.retreatDirection == "North":
+                    step_north(1)
+                elif robotProperties.CurrentNode.retreatDirection == "South":
+                    step_south(1)
+                elif robotProperties.CurrentNode.retreatDirection == "West":
+                    step_west(1)
+                elif robotProperties.CurrentNode.retreatDirection == "East":
+                    step_east(1)
+                #retreat
+
+    ###########
 
 
 #    while True:
