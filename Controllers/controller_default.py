@@ -206,32 +206,28 @@ def control_robot(robot):
                         print("Step North")
                         break
                     else:
-                        robotProperties.seekingdirection = 2
-                        print("Changing direction 2")
+                        pass
                 elif i == "South":
                     if robotProperties.CurrentNode.Paths[i] == "Available":
                         step_south(1)
                         print("Step South")
                         break
                     else:
-                        robotProperties.seekingdirection = 4
-                        print("Changing direction 4")
+                        pass
                 elif i == "West":
                     if robotProperties.CurrentNode.Paths[i] == "Available":
                         step_west(1)
                         print("Step West")
                         break
                     else:
-                        robotProperties.seekingdirection = 1
-                        print("Changing direction 1")
+                        pass
                 elif i == "East":
                     if robotProperties.CurrentNode.Paths[i] == "Available":
                         step_east(1)
                         print("Step East")
                         break
                     else:
-                        robotProperties.seekingdirection = 3
-                        print("Changing direction 3")
+                        pass
             elif robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None and (robotProperties.CurrentNode.Paths[i] == "Available" or robotProperties.CurrentNode.Paths[i] == "ParentDirection"):
                 robotProperties.CurrentNode.NumberofAdjacentExistingNodes = robotProperties.CurrentNode.NumberofAdjacentExistingNodes + 1
         ###########
