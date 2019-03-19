@@ -155,8 +155,6 @@ def control_robot(robot):
 
 
 
-
-
     # Getting basic information about the current maze and where everything that involves the actual robot goes ##############################################################################################
     packets = robot.sense_packets()
     print(packets)
@@ -169,6 +167,7 @@ def control_robot(robot):
     #--Real depth first search--#
 
     while True:
+        print("#####################")
         if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
             print("Already a node here: " + repr(robotProperties.currentPosition))
             robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
@@ -179,6 +178,7 @@ def control_robot(robot):
         
         robotProperties.CurrentNode.NumberofAdjacentExistingNodes = 0
         for i in robotProperties.CurrentNode.AdjacentNodes:
+            print("i = " + str(i))
             if robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) == None:
                 if i == "North": #and robotProperties.seekingdirection == 1:
                     if robotProperties.CurrentNode.Paths[i] == "Available":
@@ -212,12 +212,14 @@ def control_robot(robot):
                     else:
                         robotProperties.seekingdirection = 3
                         print("Changing direction 3")
-            elif robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None:
+            elif robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None and (robotProperties.CurrentNode.Paths[i] == "Available" or robotProperties.CurrentNode.Paths[i] == "ParentDirection"):
                 robotProperties.CurrentNode.NumberofAdjacentExistingNodes = robotProperties.CurrentNode.NumberofAdjacentExistingNodes + 1
 
         print("Adjacent nodes to live paths: " + str(robotProperties.CurrentNode.NumberofAdjacentExistingNodes) + "\t" + str(robotProperties.CurrentNode.numlivepaths))
-        if robotProperties.CurrentNode.NumberofAdjacentExistingNodes == robotProperties.CurrentNode.numlivepaths or robotProperties.CurrentNode.numdeadpaths >= 3:
+        if robotProperties.CurrentNode.NumberofAdjacentExistingNodes == robotProperties.CurrentNode.numlivepaths: #or robotProperties.CurrentNode.numdeadpaths >= 3:
             print("Trying retreat: " + robotProperties.CurrentNode.retreatDirection)
+
+            #--Retreat--#
             if robotProperties.CurrentNode.retreatDirection == "North":
                 print("Retreating North")
                 step_north(1)
@@ -230,7 +232,7 @@ def control_robot(robot):
             elif robotProperties.CurrentNode.retreatDirection == "East":
                 print("Retreating East")
                 step_east(1)
-                
+            ###########    
         
 
     ###########
