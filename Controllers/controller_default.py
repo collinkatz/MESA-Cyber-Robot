@@ -13,6 +13,8 @@ import time
 
 # Seting up variables for absolute coordinate system || Robot will be keeping track of its own coordinates as well as coordinates of packets and viruses relative to the starting point/origin
 class robotInheritence: # a class used once which defines the properties that the robot will inherit at the begining of the program
+    CurrentPacketNumber = 0 # The number of the packet currently being sought after
+    AllPackets = {} # Dictionary containing the positions of all packets indexed at their collection order number
     CurrentFacingDirection = 1 # Direction is represented in a number from 1 to 4 || 1 is North, 2 is East, 3 is South, and 4 is West
     currentPosition = [0, 0] # The robots position represented as an Array with index 0 as the X value and index 1 as the Y value
     CurrentNode = None # The node instance that the robot currently has the same position as
@@ -26,9 +28,10 @@ class node:
         self.retreatDirection = "" # The direction that the robot will retreat away from the node
         self.numdeadpaths = 0 # Number of unavailable directions to move at a node ie. if node in open = 0 if node surrounded by walls = 4
         self.numlivepaths = 0 # Number of available directions to move at a node
-        self.NumberofAdjacentExistingNodes = 0 # Number of nodes that currently exist adjacently from a node
+        self.NumberofAdjacentExistingNodes = 0 # Number of nodes that currently exist adjacently from a node which also have a path to them
         self.Paths = {"North": False, "South": False, "West": False, "East": False} # The status in all cardinal directions of potential movements
         self.AdjacentNodes = {"North": [self.nodePosition[0], self.nodePosition[1] + 1], "South": [self.nodePosition[0], self.nodePosition[1] - 1], "West": [self.nodePosition[0] - 1, self.nodePosition[1]], "East": [self.nodePosition[0] + 1, self.nodePosition[1]]} # The positions of all nodes adjacent of this node instance
+        self.InCurrentPath = True
 
         #--This sets up all values in self.Paths--#
         for i in range(0, len(pathData)):
@@ -169,9 +172,14 @@ def control_robot(robot):
         elif robotProperties.CurrentNode.retreatDirection == "East":
             print("Retreating East")
             step_east(1)
+    
+    def ComputeCost(NodePosition, PacketPosition):
+        d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation where d = the distance between the robot and the packet it's seeking
+        return d
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ##############################################################################################
     packets = robot.sense_packets()
+    robotProperties.CurrentPacketNumber = 1
     print(packets)
 
     #--Initilization of robot node system--#
@@ -181,13 +189,22 @@ def control_robot(robot):
 
     #--Real depth first search--#
 
-    while True:
+    while True: # Makes one cycle for every time the robot moves to a different node
         print("#####################")
+        print("Current packet number" + str(robotProperties.CurrentPacketNumber))
+        if robotProperties.currentPosition == packets[robotProperties.CurrentPacketNumber]:
+            robot.jump()
+            print("I Jumped")
+            for i in robotProperties.nodeDict:
+                robotProperties.nodeDict[i].InCurrentPath = False
+            robotProperties.CurrentPacketNumber = robotProperties.CurrentPacketNumber + 1
+            time.sleep(1)
 
         #--Decides whether or not to make a node in the current location and update the robots current node--#
         if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
             print("Already a node here: " + repr(robotProperties.currentPosition))
             robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+            robotProperties.CurrentNode.InCurrentPath = True
         else:
             print("Make node here: " + repr(robotProperties.currentPosition))
             make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
@@ -196,43 +213,62 @@ def control_robot(robot):
 
         robotProperties.CurrentNode.NumberofAdjacentExistingNodes = 0 # Updates the number of adjacent nodes the current node has each time the robot enters a node
 
-        #--This decides what direction the robot will step in to explore a position without a node--#
+        #--A* to decide which adjacent node has the lowest cost--#
+        LowestCostDirection = ["Direction", 999]
+
+        for i in robotProperties.CurrentNode.AdjacentNodes:
+            NodeToPacketDistance = ComputeCost(robotProperties.CurrentNode.AdjacentNodes[i], packets[robotProperties.CurrentPacketNumber])
+            if NodeToPacketDistance <= LowestCostDirection[1] and robotProperties.CurrentNode.Paths[i] != "NoPath":
+                if robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None:
+                    if robotProperties.nodeDict[repr(robotProperties.CurrentNode.AdjacentNodes[i])].InCurrentPath == False:
+                        LowestCostDirection = [i, NodeToPacketDistance]
+                else:
+                    LowestCostDirection = [i, NodeToPacketDistance]
+
+        print("Lowest Costs [Direction], [Distance]: " + str(LowestCostDirection[0]) + ", " + str(LowestCostDirection[1]))
+        ###########
+        
+        #--This decides what direction the robot will step in to explore a position without a node or with a node if the node is not part of the current path--#
         for i in robotProperties.CurrentNode.AdjacentNodes:
             print("i = " + str(i))
-            if robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) == None: # If the robot does not find a node at an adjacent position
-                if i == "North":
-                    if robotProperties.CurrentNode.Paths[i] == "Available":
+
+            IfNodeExistsShouldIConsider = False
+
+            if robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None:
+                if robotProperties.nodeDict[repr(robotProperties.CurrentNode.AdjacentNodes[i])].InCurrentPath == False:
+                    print("Node Exists and I should consider stepping on it")
+                    IfNodeExistsShouldIConsider = True
+
+            if robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) == None or IfNodeExistsShouldIConsider == True: # If the robot does not find a node at an adjacent position
+                if i == "North" and LowestCostDirection[0] == "North":
+                    if robotProperties.CurrentNode.Paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_north(1)
                         print("Step North")
                         break
                     else:
-                        robotProperties.seekingdirection = 2
-                        print("Changing direction 2")
-                elif i == "South":
-                    if robotProperties.CurrentNode.Paths[i] == "Available":
+                        pass
+                elif i == "South" and LowestCostDirection[0] == "South":
+                    if robotProperties.CurrentNode.Paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_south(1)
                         print("Step South")
                         break
                     else:
-                        robotProperties.seekingdirection = 4
-                        print("Changing direction 4")
-                elif i == "West":
-                    if robotProperties.CurrentNode.Paths[i] == "Available":
+                        pass
+                elif i == "West" and LowestCostDirection[0] == "West":
+                    if robotProperties.CurrentNode.Paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_west(1)
                         print("Step West")
                         break
                     else:
-                        robotProperties.seekingdirection = 1
-                        print("Changing direction 1")
-                elif i == "East":
-                    if robotProperties.CurrentNode.Paths[i] == "Available":
+                        pass
+                elif i == "East" and LowestCostDirection[0] == "East":
+                    if robotProperties.CurrentNode.Paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_east(1)
                         print("Step East")
                         break
                     else:
-                        robotProperties.seekingdirection = 3
-                        print("Changing direction 3")
-            elif robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None and (robotProperties.CurrentNode.Paths[i] == "Available" or robotProperties.CurrentNode.Paths[i] == "ParentDirection"):
+                        pass
+            elif robotProperties.nodeDict.get(repr(robotProperties.CurrentNode.AdjacentNodes[i])) != None and robotProperties.CurrentNode.Paths[i] != "NoPath":
                 robotProperties.CurrentNode.NumberofAdjacentExistingNodes = robotProperties.CurrentNode.NumberofAdjacentExistingNodes + 1
         ###########
 
@@ -240,7 +276,8 @@ def control_robot(robot):
         
         if robotProperties.CurrentNode.NumberofAdjacentExistingNodes == robotProperties.CurrentNode.numlivepaths: # Conditions for retreating
             print("Trying retreat: " + robotProperties.CurrentNode.retreatDirection)
-            Retreat()    
+            Retreat()
+        time.sleep(.2)
         
 
     ###########
