@@ -190,9 +190,9 @@ def control_robot(robot):
             step_east(1)
     
     def ComputeCost(NodePosition, PacketPosition):
-        #d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation where d = the distance between the robot and the packet it's seeking
-        return abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1])
-        #return d
+        d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation where d = the distance between the robot and the packet it's seeking
+        #return abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1])
+        return d
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ##############################################################################################
     packets = robot.sense_packets()
@@ -204,6 +204,7 @@ def control_robot(robot):
     robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
     robot.turn_right()
     SouthWall = robot.sense_steps(robot.SENSOR_RIGHT)
+    robot.turn_left()
     if SouthWall == 0:
         robotProperties.CurrentNode.Paths["South"] = "NoPath"
     elif SouthWall > 0:
