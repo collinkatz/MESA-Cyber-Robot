@@ -158,6 +158,22 @@ def control_robot(robot):
             Eastdistance = distancefromWalls[0]
         robotNode = node(position, retreatNode, [Northdistance, Southdistance, Westdistance, Eastdistance]) # Creating a node using the filtered information
         robotProperties.nodeDict[repr(position)] = robotNode # Adding the new node to the robots node dictionary
+    
+    def update_node(position, facingDirection):
+        if facingDirection == 1: # if the direction it is facing is North
+            robotProperties.CurrentNode.Paths["South"] = "ParentDirection"
+            robotProperties.CurrentNode.retreatDirection = "South"
+        elif facingDirection == 3: # if the direction it is facing is South
+            robotProperties.CurrentNode.Paths["North"] = "ParentDirection"
+            robotProperties.CurrentNode.retreatDirection = "North"
+        elif facingDirection == 4: # if the direction it is facing is West
+            robotProperties.CurrentNode.Paths["East"] = "ParentDirection"
+            robotProperties.CurrentNode.retreatDirection = "East"
+        elif facingDirection == 2: # if the direction it is facing is East
+            robotProperties.CurrentNode.Paths["West"] = "ParentDirection"
+            robotProperties.CurrentNode.retreatDirection = "West"
+        robotProperties.CurrentNode.Paths[robotProperties.CurrentNode.retreatDirection] = "Available"
+
 
     def Retreat(): # Moves robot back to the previous node
         if robotProperties.CurrentNode.retreatDirection == "North":
@@ -174,8 +190,9 @@ def control_robot(robot):
             step_east(1)
     
     def ComputeCost(NodePosition, PacketPosition):
-        d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation where d = the distance between the robot and the packet it's seeking
-        return d
+        #d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation where d = the distance between the robot and the packet it's seeking
+        return abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1])
+        #return d
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ##############################################################################################
     packets = robot.sense_packets()
@@ -185,6 +202,12 @@ def control_robot(robot):
     #--Initilization of robot node system--#
     make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
     robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+    robot.turn_right()
+    SouthWall = robot.sense_steps(robot.SENSOR_RIGHT)
+    if SouthWall == 0:
+        robotProperties.CurrentNode.Paths["South"] = "NoPath"
+    elif SouthWall > 0:
+        robotProperties.CurrentNode.Paths["South"] = "Available"
     ###########
 
     #--Real depth first search--#
@@ -204,7 +227,9 @@ def control_robot(robot):
         if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
             print("Already a node here: " + repr(robotProperties.currentPosition))
             robotProperties.CurrentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
-            robotProperties.CurrentNode.InCurrentPath = True
+            if robotProperties.CurrentNode.InCurrentPath == False:
+                update_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection)
+                robotProperties.CurrentNode.InCurrentPath = True
         else:
             print("Make node here: " + repr(robotProperties.currentPosition))
             make_node(robotProperties.currentPosition, robotProperties.CurrentFacingDirection, robotProperties.CurrentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
@@ -277,7 +302,7 @@ def control_robot(robot):
         if robotProperties.CurrentNode.NumberofAdjacentExistingNodes == robotProperties.CurrentNode.numlivepaths: # Conditions for retreating
             print("Trying retreat: " + robotProperties.CurrentNode.retreatDirection)
             Retreat()
-        time.sleep(.2)
+        # time.sleep(.2)
         
 
     ###########
