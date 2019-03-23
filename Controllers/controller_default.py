@@ -1,16 +1,18 @@
-__team__ = "Viking 1 Veterans"
-__contributors__ = "Collin Katz, Ayana Monroe, Abhinav Modugula, and David Huh"
-__email__ = "collin.katz@gmail.com"
-__status__ = "Finalization"
-__datecreated__ = "Tuesday, ‎March ‎19, ‎2019, ‏‎6:44:57 PM"
-__datemodified__ = "Saturday, March ‎23, ‎2019, 3:37:01 PM"
-__pythonversion__ = "3.6.5"
-
 #import logging # Not in use
 #import datetime # Not in use
 import math
 #import random # Not in use
 import time
+
+###############################################################################
+# Team Name:      Viking 1 Veterans                                           #
+#                                                                             #
+# Contributors:   Collin Katz, Ayana Monroe, Abhinav Modugula, and David Huh  #
+#                                                                             #
+# Email:          collin.katz@gmail.com                                       #
+# School:         Long Reach High School                                      #
+# Date Created:   Wednesday February 16, 2019, 10:18 AM                       #
+###############################################################################
 
 #--Makes own logfile--# Depricated
 # Setup a timestamped logfile for this run in the logs directory
