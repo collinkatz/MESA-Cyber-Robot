@@ -393,7 +393,7 @@ def control_robot(robot):
         robotProperties.currentNode.numberOfAdjacentExistingNodes = 0 # Changes the number of adjacent nodes the current node has each time the robot enters a node
 
         #--Uses ComputeCost() to decide which adjacent node has the lowest cost--#
-        LowestCostDirection = ["Direction", 999]
+        LowestCostDirection = ["Direction", 999] # Using 999 as a very large integer to find values that are lower than the previous value in a loop
 
         for i in robotProperties.currentNode.adjacentNodes:
             NodeToPacketDistance = ComputeCost(robotProperties.currentNode.adjacentNodes[i], packets[robotProperties.currentPacketNumber])
