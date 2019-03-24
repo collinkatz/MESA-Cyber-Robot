@@ -1,9 +1,3 @@
-#import logging # Not in use
-#import datetime # Not in use
-import math
-#import random # Not in use
-import time
-
 ###############################################################################
 # Team Name:      Viking 1 Veterans                                           #
 #                                                                             #
@@ -15,12 +9,8 @@ import time
 # Date Created:   Wednesday February 16, 2019, 10:18 AM                       #
 ###############################################################################
 
-#--Makes own logfile--# Depricated
-# Setup a timestamped logfile for this run in the logs directory
-#timestamp = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-#logfilename = 'D:\\Collin\\Documents\\Python\\MESA Cyber Robot\\Repository\\Logs\\robot_logfile_' + timestamp + '.txt'
-#logging.basicConfig(filename=logfilename,level=logging.DEBUG)
-###########
+import math
+import time
 
 class robotInheritence:
     """ Class:          robotInheritence
@@ -344,7 +334,6 @@ def control_robot(robot):
             Returns:        the distance between
         """
         d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation
-        # d = abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1]) # depricated Manhattan distance equation
         return d
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ############################################################################################## This is where the fun begins
@@ -375,7 +364,6 @@ def control_robot(robot):
             for i in robotProperties.nodeDict:
                 robotProperties.nodeDict[i].inCurrentPath = False
             robotProperties.currentPacketNumber += 1
-            #time.sleep(1)
 
         #--Decides whether or not to make a node in the current location and update the robots current node if it was not in its current path--#
         if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
@@ -456,7 +444,5 @@ def control_robot(robot):
         if robotProperties.currentNode.numberOfAdjacentExistingNodes == robotProperties.currentNode.numLivepaths: # Conditions for retreating
             print "Trying retreat: " + robotProperties.currentNode.retreatDirection
             Retreat()
-        # time.sleep(.2)
         
-
     ###########
