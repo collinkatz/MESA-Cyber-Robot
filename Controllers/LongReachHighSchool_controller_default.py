@@ -108,7 +108,7 @@ class node:
         for i in range(0, len(pathData)):
             if isinstance(pathData[i], str):
                 print "The passed value is a string"
-                self.numLivepaths = self.numLivepaths + 1
+                self.numLivepaths += 1
                 if i == 0:
                     self.retreatDirection = "North"
                 elif i == 1:
@@ -121,11 +121,11 @@ class node:
                 if pathData[i] > 0:
                     print str(i) + "\t" + str(pathData[i])
                     pathData[i] = "Available"
-                    self.numLivepaths = self.numLivepaths + 1
+                    self.numLivepaths += 1
                 elif pathData[i] == 0:
                     print str(i) + "\t" + str(pathData[i])
                     pathData[i] = "NoPath"
-                    self.numDeadpaths = self.numDeadpaths + 1
+                    self.numDeadpaths += 1
                 else:
                     print "node: why so negative?"
             else:
@@ -164,7 +164,7 @@ def control_robot(robot):
             pass
         ###########
         robot.step_forward(distance)
-        robotProperties.currentPosition[1] = robotProperties.currentPosition[1] + distance
+        robotProperties.currentPosition[1] += distance
         robotProperties.currentFacingDirection = 1
 
     def step_south(distance):
@@ -188,7 +188,7 @@ def control_robot(robot):
             pass
         ###########
         robot.step_forward(distance)
-        robotProperties.currentPosition[1] = robotProperties.currentPosition[1] - distance
+        robotProperties.currentPosition[1] -= distance
         robotProperties.currentFacingDirection = 3
 
     def step_west(distance):
@@ -212,7 +212,7 @@ def control_robot(robot):
             pass
         ###########
         robot.step_forward(distance)
-        robotProperties.currentPosition[0] = robotProperties.currentPosition[0] - distance
+        robotProperties.currentPosition[0] -= distance
         robotProperties.currentFacingDirection = 4
 
     def step_east(distance):
@@ -236,7 +236,7 @@ def control_robot(robot):
             pass
         ###########
         robot.step_forward(distance)
-        robotProperties.currentPosition[0] = robotProperties.currentPosition[0] + distance
+        robotProperties.currentPosition[0] += distance
         robotProperties.currentFacingDirection = 2
     ###########
 
@@ -374,7 +374,7 @@ def control_robot(robot):
             print "I Jumped"
             for i in robotProperties.nodeDict:
                 robotProperties.nodeDict[i].inCurrentPath = False
-            robotProperties.currentPacketNumber = robotProperties.currentPacketNumber + 1
+            robotProperties.currentPacketNumber += 1
             #time.sleep(1)
 
         #--Decides whether or not to make a node in the current location and update the robots current node if it was not in its current path--#
@@ -448,7 +448,7 @@ def control_robot(robot):
                     else:
                         pass
             elif robotProperties.nodeDict.get(repr(robotProperties.currentNode.adjacentNodes[i])) != None and robotProperties.currentNode.paths[i] != "NoPath":
-                robotProperties.currentNode.numberOfAdjacentExistingNodes = robotProperties.currentNode.numberOfAdjacentExistingNodes + 1
+                robotProperties.currentNode.numberOfAdjacentExistingNodes += 1
         ###########
 
         print "Adjacent nodes to live paths: " + str(robotProperties.currentNode.numberOfAdjacentExistingNodes) + "\t" + str(robotProperties.currentNode.numLivepaths)
