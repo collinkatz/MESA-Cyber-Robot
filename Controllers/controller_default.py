@@ -38,12 +38,16 @@ class robotInheritence:
                         nodeDict            -   a dictionary that contains every node that has been initialized.
                                                 Each node is indexed in nodeDict at its position as an array
                                                 represented as a string in the form "[X, Y]".
+                        bugArray            -   an array that contains the position of every bug in the maze.
+                                                Each index in the array is a position of a bug in the maze in the
+                                                form "[X, Y]".
     """
     currentPacketNumber = 0
     currentFacingDirection = 1
     currentPosition = [0, 0]
     currentNode = None
     nodeDict = {}
+    bugArray = []
 
 class node:
     """ Class:          node
@@ -256,7 +260,7 @@ def control_robot(robot):
         """ Function:       make_node
 
             Description:    Creates a node instance and passes values to __init__ function
-                            of node classabout the nodes surroundings and its positions so 
+                            of node class about the nodes surroundings and its positions so 
                             the node can be initialized.
             
             Parameters:     position            -   the position to be passed to the node to initialize the node
@@ -363,14 +367,29 @@ def control_robot(robot):
 
             Returns:        the distance between
         """
+        bugonnode = False
+        for i in range(len(bugArray)):
+            if bugArray[i] == NodePosition:
+                bugonnode = True
         d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation
+        if bugonnode == True:
+            if d >= 5:
+                cost = 999
+            else:
+                cost = d
+        elif bugonnode == False:
+            cost = d
         # d = abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1]) # depricated Manhattan distance equation
-        return d
+        return cost
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ############################################################################################## This is where the fun begins
     packets = robot.sense_packets()
     robotProperties.currentPacketNumber = 1
-    print(packets)
+    print("Packets: " + str(packets))
+    bugs = robot.sense_bugs()
+    print("Bugs: " + str(bugs))
+    bugArray = bugs
+
 
     #--Initilization of robot node system--# Makes first node and sets up origin point
     make_node(robotProperties.currentPosition, robotProperties.currentFacingDirection, robotProperties.currentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
@@ -424,6 +443,8 @@ def control_robot(robot):
                 else:
                     LowestCostDirection = [i, NodeToPacketDistance]
 
+        if LowestCostDirection[1] == 999:
+            LowestCostDirection[1] = "Bugged"
         print("Lowest Costs [Direction], [Distance]: " + str(LowestCostDirection[0]) + ", " + str(LowestCostDirection[1]))
         ###########
         
@@ -439,28 +460,28 @@ def control_robot(robot):
                     IfNodeExistsShouldIConsider = True
 
             if robotProperties.nodeDict.get(repr(robotProperties.currentNode.adjacentNodes[i])) == None or IfNodeExistsShouldIConsider == True: # If the robot does not find a node at an adjacent position
-                if i == "North" and LowestCostDirection[0] == "North":
+                if i == "North" and LowestCostDirection[0] == "North" and LowestCostDirection[1] != "Bugged":
                     if robotProperties.currentNode.paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_north(1)
                         print("Step North")
                         break
                     else:
                         pass
-                elif i == "South" and LowestCostDirection[0] == "South":
+                elif i == "South" and LowestCostDirection[0] == "South" and LowestCostDirection[1] != "Bugged":
                     if robotProperties.currentNode.paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_south(1)
                         print("Step South")
                         break
                     else:
                         pass
-                elif i == "West" and LowestCostDirection[0] == "West":
+                elif i == "West" and LowestCostDirection[0] == "West" and LowestCostDirection[1] != "Bugged":
                     if robotProperties.currentNode.paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_west(1)
                         print("Step West")
                         break
                     else:
                         pass
-                elif i == "East" and LowestCostDirection[0] == "East":
+                elif i == "East" and LowestCostDirection[0] == "East" and LowestCostDirection[1] != "Bugged":
                     if robotProperties.currentNode.paths[i] != "NoPath" or IfNodeExistsShouldIConsider == True:
                         step_east(1)
                         print("Step East")
@@ -473,7 +494,7 @@ def control_robot(robot):
 
         print("Adjacent nodes to live paths: " + str(robotProperties.currentNode.numberOfAdjacentExistingNodes) + "\t" + str(robotProperties.currentNode.numLivepaths))
         
-        if robotProperties.currentNode.numberOfAdjacentExistingNodes == robotProperties.currentNode.numLivepaths: # Conditions for retreating
+        if robotProperties.currentNode.numberOfAdjacentExistingNodes == robotProperties.currentNode.numLivepaths or LowestCostDirection[1] == "Bugged": # Conditions for retreating
             print("Trying retreat: " + robotProperties.currentNode.retreatDirection)
             Retreat()
         # time.sleep(.2)
