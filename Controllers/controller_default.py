@@ -48,6 +48,7 @@ class robotInheritence:
     currentNode = None
     nodeDict = {}
     bugArray = []
+    bugSearchLocations = []
 
 class node:
     """ Class:          node
@@ -353,6 +354,19 @@ def control_robot(robot):
         elif robotProperties.currentNode.retreatDirection == "East":
             print("Retreating East")
             step_east(1)
+
+    def LinearDistance(pos1, pos2):
+        """ Function:       LinearDistance
+
+            Description:    Finds the linear distance between two positions
+            
+            Parameters:     pos1  -   a position in the form "[X, Y]"
+                            pos2  -   a different position in the form "[X, Y]"
+
+            Returns:        the distance between the two given points
+        """
+        d = math.sqrt( ( math.pow(pos1[0]-pos2[0], 2) )+( math.pow(pos1[1]-pos2[1], 2) ) )
+        return d
     
     def ComputeCost(NodePosition, PacketPosition):
         """ Function:       ComputeCost
@@ -365,30 +379,76 @@ def control_robot(robot):
             Parameters:     NodePosition    -   the position of the node the robot is on
                             PacketPosition  -   the position of the packet the robot is seeking
 
-            Returns:        the distance between
+            Returns:        a number representing the cost of steping to a new location
         """
         bugonnode = False
-        for i in range(len(bugArray)):
-            if bugArray[i] == NodePosition:
+        print("DetectedBugs: " + repr(robotProperties.bugArray))
+        for i in range(len(robotProperties.bugArray)):
+            if robotProperties.bugArray[i] == NodePosition:
                 bugonnode = True
-        d = math.sqrt( ( math.pow(PacketPosition[0]-NodePosition[0], 2) )+( math.pow(PacketPosition[1]-NodePosition[1], 2) ) ) # Linear distance equation
+                print("Cost Function bugonnode: " + str(bugonnode))
+        d = LinearDistance(NodePosition, PacketPosition)
+        cost = d
         if bugonnode == True:
             if d >= 5:
-                cost = 999
+                cost = d+20
             else:
-                cost = d
+                cost = d+10
         elif bugonnode == False:
             cost = d
         # d = abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1]) # depricated Manhattan distance equation
-        return cost
+        return [cost, bugonnode]
+
+    def relativeToAbsolute(relativeCoordinates):
+        """ Function:       relativeToAbsolute
+
+            Description:    Translates a point which is relative to the robot
+                            and gives it relative to the origin (absolute)
+            
+            Parameters:     relativeCoordinates    -   a set of coordinates in the form "[X, Y]" which
+                                                       are relative to the robot
+
+            Returns:        returns a set of coordinates translated from relative to the
+                            robot to absolute with respects to the origin
+        """
+        if robotProperties.currentFacingDirection == 1:
+            absoluteCoordinates = [robotProperties.currentPosition[0] + relativeCoordinates[0], robotProperties.currentPosition[1] + relativeCoordinates[1]]
+        elif robotProperties.currentFacingDirection == 2:
+            absoluteCoordinates = [robotProperties.currentPosition[0] + (-1*relativeCoordinates[1]), robotProperties.currentPosition[1] + relativeCoordinates[0]]
+        elif robotProperties.currentFacingDirection == 3:
+            absoluteCoordinates = [robotProperties.currentPosition[0] + (-1*relativeCoordinates[0]), robotProperties.currentPosition[1] + (-1*relativeCoordinates[1])]
+        elif robotProperties.currentFacingDirection == 4:
+            absoluteCoordinates = [robotProperties.currentPosition[0] + relativeCoordinates[1], robotProperties.currentPosition[1] + (-1*relativeCoordinates[0])]
+
+        return absoluteCoordinates
+
+    def detectBugs():
+        """ Function:       detectBugs
+
+            Description:    senses for bugs and puts their absolute positions into
+                            bugArray. Also adds this search location to the list of
+                            searched locations
+            
+            Returns:        returns newly located bugs to the bugArray and the search
+                            location to the searched locations list
+        """
+        bugs = robot.sense_bugs()
+        robotProperties.bugSearchLocations.append([robotProperties.currentPosition[0], robotProperties.currentPosition[1]])
+        for i in range(len(bugs)):
+            bugAlreadyInArray = False
+            bugs[i] = relativeToAbsolute(bugs[i])
+            for k in range(len(robotProperties.bugArray)):
+                if robotProperties.bugArray[k] == bugs[i]:
+                    bugAlreadyInArray = True
+            if bugAlreadyInArray == False:
+                robotProperties.bugArray.append(bugs[i])
+
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ############################################################################################## This is where the fun begins
     packets = robot.sense_packets()
+    detectBugs()
     robotProperties.currentPacketNumber = 1
     print("Packets: " + str(packets))
-    bugs = robot.sense_bugs()
-    print("Bugs: " + str(bugs))
-    bugArray = bugs
 
 
     #--Initilization of robot node system--# Makes first node and sets up origin point
@@ -416,6 +476,18 @@ def control_robot(robot):
             robotProperties.currentPacketNumber = robotProperties.currentPacketNumber + 1
             time.sleep(1)
 
+        #--Decides whether or not to search for bugs at the begining of a new step--#
+        inRangeOfBugSearchLocation = False
+        for j in range(len(robotProperties.bugSearchLocations)):
+            print("bugSearchLocations[j]= " + str(robotProperties.bugSearchLocations[j]))
+            print("len(bugSearchLocations[j])= " + str(len(robotProperties.bugSearchLocations)))
+            print("Distance From Bug Search Location: " + str(LinearDistance(robotProperties.currentPosition, robotProperties.bugSearchLocations[j])))
+            if LinearDistance(robotProperties.currentPosition, robotProperties.bugSearchLocations[j]) <= 10:
+                inRangeOfBugSearchLocation = True
+        if inRangeOfBugSearchLocation == False:
+            detectBugs()
+        ###########
+
         #--Decides whether or not to make a node in the current location and update the robots current node if it was not in its current path--#
         if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
             print("Already a node here: " + repr(robotProperties.currentPosition))
@@ -435,7 +507,8 @@ def control_robot(robot):
         LowestCostDirection = ["Direction", 999]
 
         for i in robotProperties.currentNode.adjacentNodes:
-            NodeToPacketDistance = ComputeCost(robotProperties.currentNode.adjacentNodes[i], packets[robotProperties.currentPacketNumber])
+            costFunctionData = ComputeCost(robotProperties.currentNode.adjacentNodes[i], packets[robotProperties.currentPacketNumber])
+            NodeToPacketDistance = costFunctionData[0]
             if NodeToPacketDistance <= LowestCostDirection[1] and robotProperties.currentNode.paths[i] != "NoPath":
                 if robotProperties.nodeDict.get(repr(robotProperties.currentNode.adjacentNodes[i])) != None:
                     if robotProperties.nodeDict[repr(robotProperties.currentNode.adjacentNodes[i])].inCurrentPath == False:
@@ -445,7 +518,7 @@ def control_robot(robot):
 
         if LowestCostDirection[1] == 999:
             LowestCostDirection[1] = "Bugged"
-        print("Lowest Costs [Direction], [Distance]: " + str(LowestCostDirection[0]) + ", " + str(LowestCostDirection[1]))
+        print("Lowest Costs [Direction], [Distance]: " + str(LowestCostDirection[0]) + ", " + str(LowestCostDirection[1]) + ", BugonNode: " + str(costFunctionData[1]))
         ###########
         
         #--This decides what direction the robot will step in to explore a position without a node or with a node if the node is not part of the current path--#
