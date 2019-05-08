@@ -42,9 +42,23 @@ class robotInheritence:
                         bugArray            -   an array that contains the position of every bug in the maze.
                                                 Each index in the array is a position of a bug in the maze in the
                                                 form "[X, Y]".
+                        bugSearchLocations  -   an array that contains the position of every location where bugs
+                                                were searched for. Each index in the array is a position in the
+                                                form "[X, Y]".
+                        virusArray          -   an array that contains the position of every virus in the maze.
+                                                Each index in the array is a position of a bug in the maze in the
+                                                form "[X, Y]".
+                        virusSearchLocations-   an array that contains the position of every location where viruses
+                                                were searched for. Each index in the array is a position in the
+                                                form "[X, Y]".
+                        searchMode          -   a string describing what the robot is seeking for either a packet
+                                                or a virus.
+                        numPacketsLeft      -   a number representing how many packets are left in the maze. updated
+                                                after a new packet is collected.
+                        targetCoordinate    -   the position in the maze that the robot is trying to reach to
+                                                collect its target represented as an array in the form [X, Y].
     """
     currentPacketNumber = 0
-    currentVirusNumber = 0
     currentFacingDirection = 1
     currentPosition = [0, 0]
     currentNode = None
@@ -449,7 +463,6 @@ def control_robot(robot):
                     bugAlreadyInArray = True
             if bugAlreadyInArray == False:
                 robotProperties.bugArray.append(bugs[i])
-     #has the robot follow a list of instructions
     
     def detectViruses():
         """ Function:       detectViruses
@@ -473,6 +486,15 @@ def control_robot(robot):
                 robotProperties.virusArray.append(viruses[i])
 
     def followInstructions(instructionsList):
+        """ Function:       detectViruses
+
+            Description:    senses for viruses and puts their absolute positions into
+                            virusArray. Also adds this search location to the list of
+                            searched locations
+            
+            Returns:        returns newly located viruses to the virusArray and the search
+                            location to the searched locations list
+        """
          for i in instructionsList:
              if i == calc.moveEncoding.up:
                  step_north(1)
@@ -613,9 +635,7 @@ def control_robot(robot):
 
         robotProperties.currentNode.numberOfAdjacentExistingNodes = 0 # Changes the number of adjacent nodes the current node has each time the robot enters a node
         
-        #############################################
-        #Add the method to determine if we have a path to the next packet here
-        #############################################
+        #--Determines when to use path recalculation system--#
         print("Checking if a path can be calculated...")
         if calc.path_exists(robotProperties.targetCoordinate, robotProperties.nodeDict):
             print("-----------------Calculating path")
@@ -650,7 +670,7 @@ def control_robot(robot):
         print("Lowest Costs [Direction], [Distance]: " + str(LowestCostDirection[0]) + ", " + str(LowestCostDirection[1]) + ", BugonNode: " + str(costFunctionData[1]))
         ###########
         
-        #--This decides what direction the robot will step in to explore a position without a node or with a node if the node is not part of the current path--#
+        #--This decides what direction the robot will step in order to explore a position without a node or with a node if the node is not part of the current path--#
         for i in robotProperties.currentNode.adjacentNodes:
             print("i = " + str(i))
 
@@ -696,10 +716,15 @@ def control_robot(robot):
 
         print("Adjacent nodes to live paths: " + str(robotProperties.currentNode.numberOfAdjacentExistingNodes) + "\t" + str(robotProperties.currentNode.numLivepaths))
         
+        #--Decides when to retreat--#
         if robotProperties.currentNode.numberOfAdjacentExistingNodes == robotProperties.currentNode.numLivepaths or LowestCostDirection[1] == "Bugged": # Conditions for retreating
             print("Trying retreat: " + robotProperties.currentNode.retreatDirection)
             Retreat()
+        ###########
+        
         # time.sleep(.2)
         
 
-    ###########
+    ########### End of fun ###########
+
+###########
