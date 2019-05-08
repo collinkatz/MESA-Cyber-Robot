@@ -7,27 +7,44 @@ Method for state calculation
 from __future__ import print_function
 import collections
 
-"""
-Determines if we have been to the packet position before
-Simple: chekcs the nodelist only
-
-"""
 def path_exists(packetPos, nodeDict):
+    """
+     Function:       path_exists
+
+     Description:    Determines if it is possible to calculate a path
+                     to the next target location
+            
+     Parameters:     packetPos    -   the target position
+                     nodeDict     -   a dictionary of node positions and node objects
+
+     Returns:        True or False: whether a path can be calulated or not
+    """
     roundedPos = [int(packetPos[0]), int(packetPos[1])]
     if nodeDict.get(repr(roundedPos)) != None:
         return True
     else:
         return False
 
-"""
-Creates a grid from the Node dict data and runs breadth-first search
-"""
 def bfs(currentPos, packetPos, nodeDict):
-    #Create the matrix and add values
+    """
+     Function:       bfs
+
+     Description:    Uses the node information to contruct a partial grid
+                     representing the maze and then runs breadth-first search
+                     on that grid to find the exact path to the target packet
+                     or virus location
+            
+     Parameters:     currentPos   -   the robot's current location
+                     packetPos    -   the target position
+                     nodeDict     -   a dictionary of node positions and node objects
+
+     Returns:        A path that the robot can take to the next target location
+    """
+    #Creates the matrix
     offset = 99
     mat = createMatrix()
     coordinates = []
-    print(nodeDict)
+    
     for index, i in nodeDict.iteritems():
         coor = eval(index)
         coordinates.append(coor)
@@ -35,7 +52,8 @@ def bfs(currentPos, packetPos, nodeDict):
     packet = [packetPos[0], packetPos[1]]
     curr_pos = [currentPos[0], currentPos[1]]
     
-    print(coordinates)
+    #Normalizes all the coordinates to positive values
+    #so that they can be added to the matrix
     normalized_coors = transform_node_list(coordinates)
     mX = min(x[0] for x in coordinates)
     mY = min(x[1] for x in coordinates)
@@ -44,41 +62,45 @@ def bfs(currentPos, packetPos, nodeDict):
     curr_pos[0] += (mX * -1)
     curr_pos[1] += (mY * -1)
     
-    
-    print(normalized_coors)
+    #Adds the node, packet, and current position coordinates to the matrix
     for i in normalized_coors:
         mat[offset - i[1]][i[0]] = moveEncoding.node #error is here with list index
-    
-   
     mat[int(offset - packet[1])][int(packet[0])] = moveEncoding.packet
     mat[offset - curr_pos[1]][curr_pos[0]] = moveEncoding.start
     
    
-    for r in mat:
-        for c in r:
-            print(c, end=" ")
-            
-        print(" ")
-    #Run the search algorithm
     
-    path = searchForPath(mat, curr_pos, packet, nodeDict, mX, mY)
+    #Runs the search algorithm
+    path = searchForPath(mat, curr_pos, nodeDict, mX, mY)
     
     if path is not None:
         return listToInstructions(path)
     return None
 
-"""
-Finds the shortest path and returns a list of coordinates
-"""
-def searchForPath(grid, s, p, nodeDict, xDiff, yDiff):
-    start = (s[0], s[1])
-    #packet = (p[0], p[1])
+
+def searchForPath(grid, startCoor, nodeDict, xDiff, yDiff):
+    """
+     Function:       searchForPath
+
+     Description:    Uses the breadth-first search algorithm to find a path
+                     from start to the target location
+            
+     Parameters:     grid        - a 2D python matrix that represents the information
+                                   we know about the maze
+                     startCoor   - the positon that the search on the maze should start from 
+                     nodeDict    - a dictionary of node positions and node objects
+                     xDiff       - a constant to convert matrix coordinates to actual maze positions
+                     yDiff       - a constant to convert matrix coordinates to actual maze positions
+
+     Returns:        True or False: whether a path can be calulated or not
+    """
+    start = (startCoor[0], startCoor[1])
     queue = collections.deque([[start]])
     seen = set([start])
     while queue:
         path = queue.popleft()
         x, y = path[-1]
-        if grid[99 - y][x] == moveEncoding.packet:
+        if grid[99 - y][x] == moveEncoding.packet: #destination reached
             return path
         for x2, y2 in ((x+1,y), (x-1,y), (x,y+1), (x,y-1)):
             if 0 <= x2 < 100 and 0 <= y2 < 100 and grid[99 - y2][x2] != 0 and (x2, y2) not in seen and checkForWalls([x2,y2], [x,y], nodeDict, xDiff, yDiff) == True:
@@ -90,6 +112,20 @@ Utility methods
 """
 
 def checkForWalls(projected, current, nodeDict, xDiff, yDiff):
+    """
+     Function:       checkForWalls
+
+     Description:    makes sure that a wall is not blocking the path
+                     between two maze locations
+            
+     Parameters:     projected   -   the robot's current location
+                     current     -   the target position
+                     nodeDict    -   a dictionary of node positions and node objects
+                     xDiff       -   a constant to convert matrix coordinates to actual maze positions
+                     yDiff       -   a constant to convert matrix coordinates to actual maze positions
+
+     Returns:        true or false whether or not there is a wall in between two node positions
+    """
     possible = False
     projectedPos = [0, 0]
     currentPos = [0, 0]
@@ -109,28 +145,35 @@ def checkForWalls(projected, current, nodeDict, xDiff, yDiff):
     elif projectedPos[0] == currentPos[0] and projectedPos[1] == currentPos[1] - 1:
         data = node.paths["South"]
     #DIAGNOSTIC
-    print("Node position: " + repr(current))
-    print("To " + repr(projected))
+    
     
     if isinstance(data, str):
         if data == "Available" or data == "ParentDirection":
-            print("the parent direction was available")
+            
             possible = True
     elif isinstance(data, float):
         if data > 0:
             possible = True
-        print("Steps: " + str(data))
-    print("Value: ")
-    print(data)
+        
+    
     return possible
 
 def getNode(pos, nodeDict):
+    """
+    Returns a node object that is at a certain pos,
+    or None if there is no Node there
+    
+    """
     if nodeDict.get(repr(pos)) != None:
         return nodeDict.get(repr(pos))
     else:
         return None
 
 def transform_node_list(l):
+    """
+    Shifts a list of coordinates so that there are
+    no negative values
+    """
     mX = min(x[0] for x in l)
     mY = min(x[1] for x in l)
     ln = []
@@ -142,6 +185,10 @@ def transform_node_list(l):
     return ln
 
 class moveEncoding:
+    """
+    A Class to represent different constants that are
+    referred to throghout the path calculation algorithm
+    """
     up = "up"
     right = "right"
     left = "left"
@@ -155,11 +202,18 @@ class moveEncoding:
     empty = 0
     
 def createMatrix():
+    """
+    Creates a 100 by 100 python 2D matrix of zeroes
+    """
     w, h = 100, 100
     mat = [[0 for x in range(w)] for y in range(h)]
     return mat
 
 def listToInstructions(path):
+    """
+    Converts a list of coordinates representing a path into
+    a list of instructions that the robot can follow
+    """
     j = []
     for index, coor in enumerate(path):
         if (index == len(path) - 1):
