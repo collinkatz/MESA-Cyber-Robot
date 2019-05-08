@@ -1,7 +1,5 @@
-#import logging # Not in use
-#import datetime # Not in use
+
 import math
-#import random # Not in use
 import time
 import calc
 
@@ -15,12 +13,6 @@ import calc
 # Date Created:   Wednesday February 16, 2019, 10:18 AM                       #
 ###############################################################################
 
-#--Makes own logfile--# Depricated
-# Setup a timestamped logfile for this run in the logs directory
-#timestamp = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-#logfilename = 'D:\\Collin\\Documents\\Python\\MESA Cyber Robot\\Repository\\Logs\\robot_logfile_' + timestamp + '.txt'
-#logging.basicConfig(filename=logfilename,level=logging.DEBUG)
-###########
 
 class robotInheritence:
     """ Class:          robotInheritence
@@ -486,16 +478,13 @@ def control_robot(robot):
                 robotProperties.virusArray.append(viruses[i])
 
     def followInstructions(instructionsList):
-        """ Function:       detectViruses
-
-            Description:    senses for viruses and puts their absolute positions into
-                            virusArray. Also adds this search location to the list of
-                            searched locations
+        """ Function:   followInstructions
             
-            Returns:        returns newly located viruses to the virusArray and the search
-                            location to the searched locations list
+            Description:    follows a list of instructions returned by
+                            the path recalculation algoritm
+            Returns:    None
         """
-        for i in instructionsList:
+         for i in instructionsList:
              if i == calc.moveEncoding.up:
                  step_north(1)
              elif i == calc.moveEncoding.right:
