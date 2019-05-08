@@ -37,10 +37,10 @@ def bfs(currentPos, packetPos, nodeDict):
     """
      Function:       bfs
 
-     Description:    Uses the node information to contruct a partial grid
-                     representing the maze and then runs breadth-first search
-                     on that grid to find the exact path to the target packet
-                     or virus location
+     Description:    Breadth-first search; uses the node information to contruct 
+                     a partial grid representing the maze, and then runs 
+                     breadth-first search on that grid to find the exact 
+                     path to the target packet or virus location
             
      Parameters:     currentPos   -   the robot's current location
                      packetPos    -   the target position
