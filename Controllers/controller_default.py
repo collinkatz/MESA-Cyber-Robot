@@ -478,12 +478,12 @@ def control_robot(robot):
                 robotProperties.virusArray.append(viruses[i])
 
     def followInstructions(instructionsList):
-        """ Function:   followInstructions
+         """ Function:   followInstructions
             
             Description:    follows a list of instructions returned by
                             the path recalculation algoritm
             Returns:    None
-        """
+         """
          for i in instructionsList:
              if i == calc.moveEncoding.up:
                  step_north(1)
