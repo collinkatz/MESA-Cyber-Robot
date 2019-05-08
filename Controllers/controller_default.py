@@ -1,7 +1,5 @@
-#import logging # Not in use
-#import datetime # Not in use
+
 import math
-#import random # Not in use
 import time
 import calc
 
@@ -15,12 +13,6 @@ import calc
 # Date Created:   Wednesday February 16, 2019, 10:18 AM                       #
 ###############################################################################
 
-#--Makes own logfile--# Depricated
-# Setup a timestamped logfile for this run in the logs directory
-#timestamp = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-#logfilename = 'D:\\Collin\\Documents\\Python\\MESA Cyber Robot\\Repository\\Logs\\robot_logfile_' + timestamp + '.txt'
-#logging.basicConfig(filename=logfilename,level=logging.DEBUG)
-###########
 
 class robotInheritence:
     """ Class:          robotInheritence
