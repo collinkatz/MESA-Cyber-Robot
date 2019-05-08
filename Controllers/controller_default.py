@@ -3,6 +3,7 @@
 import math
 #import random # Not in use
 import time
+import calc
 
 ###############################################################################
 # Team Name:      Viking 1 Veterans                                           #
@@ -43,12 +44,18 @@ class robotInheritence:
                                                 form "[X, Y]".
     """
     currentPacketNumber = 0
+    currentVirusNumber = 0
     currentFacingDirection = 1
     currentPosition = [0, 0]
     currentNode = None
     nodeDict = {}
     bugArray = []
     bugSearchLocations = []
+    virusArray = []
+    virusSearchLocations = []
+    searchMode = "Packet"
+    numPacketsLeft = 0
+    targetCoordinate = [0, 0]
 
 class node:
     """ Class:          node
@@ -442,12 +449,58 @@ def control_robot(robot):
                     bugAlreadyInArray = True
             if bugAlreadyInArray == False:
                 robotProperties.bugArray.append(bugs[i])
+     #has the robot follow a list of instructions
+    
+    def detectViruses():
+        """ Function:       detectViruses
+
+            Description:    senses for viruses and puts their absolute positions into
+                            virusArray. Also adds this search location to the list of
+                            searched locations
+            
+            Returns:        returns newly located viruses to the virusArray and the search
+                            location to the searched locations list
+        """
+        viruses = robot.sense_viruses()
+        robotProperties.virusSearchLocations.append([robotProperties.currentPosition[0], robotProperties.currentPosition[1]])
+        for i in range(len(viruses)):
+            virusInArray = False
+            viruses[i] = relativeToAbsolute(viruses[i])
+            for k in range(len(robotProperties.virusArray)):
+                if robotProperties.virusArray[k] == viruses[i]:
+                    virusInArray = True
+            if virusInArray == False:
+                robotProperties.virusArray.append(viruses[i])
+
+    def followInstructions(instructionsList):
+         for i in instructionsList:
+             if i == calc.moveEncoding.up:
+                 step_north(1)
+             elif i == calc.moveEncoding.right:
+                 step_east(1)
+             elif i == calc.moveEncoding.left:
+                 step_west(1)
+             elif i == calc.moveEncoding.down:
+                 step_south(1)
+             if robotProperties.nodeDict.get(repr(robotProperties.currentPosition)) != None:
+                 print("Already a node here: " + repr(robotProperties.currentPosition))
+                 robotProperties.currentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
+                 if robotProperties.currentNode.inCurrentPath == False:
+                     update_node(robotProperties.currentPosition, robotProperties.currentFacingDirection)
+                     robotProperties.currentNode.inCurrentPath = True
+             else:
+                 print("Make node here: " + repr(robotProperties.currentPosition))
+                 make_node(robotProperties.currentPosition, robotProperties.currentFacingDirection, robotProperties.currentNode, [robot.sense_steps(robot.SENSOR_FORWARD), robot.sense_steps(robot.SENSOR_RIGHT), robot.sense_steps(robot.SENSOR_LEFT)])
+                 robotProperties.currentNode = robotProperties.nodeDict[repr(robotProperties.currentPosition)]
 
 
     # Getting basic information about the current maze and where everything that involves the actual robot goes ############################################################################################## This is where the fun begins
     packets = robot.sense_packets()
+    robotProperties.numPacketsLeft = len(packets)
     detectBugs()
+    detectViruses()
     robotProperties.currentPacketNumber = 1
+    robotProperties.targetCoordinate = packets[robotProperties.currentPacketNumber]
     print("Packets: " + str(packets))
 
 
@@ -466,15 +519,60 @@ def control_robot(robot):
     #--A* search--#
 
     while True: # Makes one cycle for every time the robot moves to a different position
+        print(" ")
         print("#--New Move--####################")
-        print("Current packet number: " + str(robotProperties.currentPacketNumber))
-        if robotProperties.currentPosition == packets[robotProperties.currentPacketNumber]:
-            robot.jump()
-            print("I Jumped")
-            for i in robotProperties.nodeDict:
-                robotProperties.nodeDict[i].inCurrentPath = False
-            robotProperties.currentPacketNumber = robotProperties.currentPacketNumber + 1
-            time.sleep(1)
+        print("Current Target: " + str(robotProperties.targetCoordinate))
+
+        #--Decides what to do when a robot hits a target--#
+        if robotProperties.currentPosition == robotProperties.targetCoordinate:
+
+            #--Does something when robot hits a target e.g. jump() to collect packet--#
+            if robotProperties.searchMode == "Packet":
+                robot.jump()
+                print("I Jumped")
+                for i in robotProperties.nodeDict:
+                    robotProperties.nodeDict[i].inCurrentPath = False
+                print("Test" + repr(packets))
+                time.sleep(1)
+            elif robotProperties.searchMode == "Virus":
+                pass
+            ###########
+
+            #--Decides which type of target was collected i.e. packet or virus--#
+            if robotProperties.searchMode == "Packet":
+                packets.pop(robotProperties.currentPacketNumber)
+                robotProperties.numPacketsLeft = len(packets)
+                robotProperties.currentPacketNumber = robotProperties.currentPacketNumber + 1
+            elif robotProperties.searchMode == "Virus":
+                robotProperties.virusArray.remove(robotProperties.currentPosition)
+            ###########
+
+            print("Packets Left:" + str(robotProperties.numPacketsLeft) + "\t Viruses Left:" + str(len(robotProperties.virusArray)))
+            
+            #--Switches robot search mode depending on state of targets i.e. switch to virus mode when only one packet remains and back to packet mode when no viruses left--#
+            if robotProperties.numPacketsLeft == 1 and len(robotProperties.virusArray) != 0:
+                robotProperties.searchMode = "Virus"
+            elif robotProperties.numPacketsLeft == 1 and len(robotProperties.virusArray) == 0:
+                robotProperties.searchMode = "Packet"
+            ###########
+
+            #--Decides what the new target will be based on the current search mode--#
+            if robotProperties.searchMode == "Packet":
+                robotProperties.targetCoordinate = packets[robotProperties.currentPacketNumber]
+            elif robotProperties.searchMode == "Virus":
+                robotProperties.targetCoordinate = robotProperties.virusArray[0]
+            ###########
+
+            continue
+        ###########
+
+        #--Removes virus from virus array at a new step if virus collected while seeking for packets--#
+        print("Virus Array: " + repr(robotProperties.virusArray))
+        for j in range(len(robotProperties.virusArray)):
+            if robotProperties.currentPosition == robotProperties.virusArray[j]:
+                robotProperties.virusArray.pop(j)
+                break
+        ###########
 
         #--Decides whether or not to search for bugs at the begining of a new step--#
         inRangeOfBugSearchLocation = False
@@ -486,6 +584,18 @@ def control_robot(robot):
                 inRangeOfBugSearchLocation = True
         if inRangeOfBugSearchLocation == False:
             detectBugs()
+        ###########
+
+        #--Decides whether or not to search for viruses at the begining of a new step--#
+        inRangeOfVirusSearchLocation = False
+        for j in range(len(robotProperties.virusSearchLocations)):
+            print("virusSearchLocations[j]= " + str(robotProperties.virusSearchLocations[j]))
+            print("len(virusSearchLocations[j])= " + str(len(robotProperties.virusSearchLocations)))
+            print("Distance From Virus Search Location: " + str(LinearDistance(robotProperties.currentPosition, robotProperties.virusSearchLocations[j])))
+            if LinearDistance(robotProperties.currentPosition, robotProperties.virusSearchLocations[j]) <= 10:
+                inRangeOfVirusSearchLocation = True
+        if inRangeOfVirusSearchLocation == False:
+            detectViruses()
         ###########
 
         #--Decides whether or not to make a node in the current location and update the robots current node if it was not in its current path--#
@@ -502,12 +612,30 @@ def control_robot(robot):
         ###########
 
         robotProperties.currentNode.numberOfAdjacentExistingNodes = 0 # Changes the number of adjacent nodes the current node has each time the robot enters a node
+        
+        #############################################
+        #Add the method to determine if we have a path to the next packet here
+        #############################################
+        print("Checking if a path can be calculated...")
+        if calc.path_exists(robotProperties.targetCoordinate, robotProperties.nodeDict):
+            print("-----------------Calculating path")
+            path = calc.bfs(robotProperties.currentPosition, robotProperties.targetCoordinate, robotProperties.nodeDict)
+            if path is not None:
+                followInstructions(path)
+                print("Path found")
+                print(path)
+                continue
+            else:
+                print("This path was found:")
+                print(path)
+        else:
+            print("A path could not be calculated")
 
         #--Uses ComputeCost() to decide which adjacent node has the lowest cost--#
         LowestCostDirection = ["Direction", 999]
 
         for i in robotProperties.currentNode.adjacentNodes:
-            costFunctionData = ComputeCost(robotProperties.currentNode.adjacentNodes[i], packets[robotProperties.currentPacketNumber])
+            costFunctionData = ComputeCost(robotProperties.currentNode.adjacentNodes[i], robotProperties.targetCoordinate)
             NodeToPacketDistance = costFunctionData[0]
             if NodeToPacketDistance <= LowestCostDirection[1] and robotProperties.currentNode.paths[i] != "NoPath":
                 if robotProperties.nodeDict.get(repr(robotProperties.currentNode.adjacentNodes[i])) != None:
