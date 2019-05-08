@@ -1,10 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
-Method for state calculation
 
-@author: Abhinav
+###############################################################################
+# Team Name:      Viking 1 Veterans                                           #
+#                                                                             #
+# Contributors:   Collin Katz, Ayana Monroe, Abhinav Modugula, and David Huh  #
+#                                                                             #
+# Email:          collin.katz@gmail.com                                       #
+# School:         Long Reach High School                                      #
+# Date Created:   Wednesday February 16, 2019, 10:18 AM                       #
+###############################################################################
+
 """
-from __future__ import print_function
+Pathing Methods
+"""
+
 import collections
 
 def path_exists(packetPos, nodeDict):
@@ -108,7 +116,7 @@ def searchForPath(grid, startCoor, nodeDict, xDiff, yDiff):
                 seen.add((x2, y2))
 
 """
-Utility methods
+Utility Methods
 """
 
 def checkForWalls(projected, current, nodeDict, xDiff, yDiff):
@@ -124,7 +132,7 @@ def checkForWalls(projected, current, nodeDict, xDiff, yDiff):
                      xDiff       -   a constant to convert matrix coordinates to actual maze positions
                      yDiff       -   a constant to convert matrix coordinates to actual maze positions
 
-     Returns:        true or false whether or not there is a wall in between two node positions
+     Returns:        True or False: whether or not there is a wall inbetween two node positions
     """
     possible = False
     projectedPos = [0, 0]
@@ -161,7 +169,7 @@ def checkForWalls(projected, current, nodeDict, xDiff, yDiff):
 def getNode(pos, nodeDict):
     """
     Returns a node object that is at a certain pos,
-    or None if there is no Node there
+    or None if there is no node there
     
     """
     if nodeDict.get(repr(pos)) != None:
@@ -186,7 +194,7 @@ def transform_node_list(l):
 
 class moveEncoding:
     """
-    A Class to represent different constants that are
+    A class to represent different constants that are
     referred to throghout the path calculation algorithm
     """
     up = "up"
@@ -203,7 +211,7 @@ class moveEncoding:
     
 def createMatrix():
     """
-    Creates a 100 by 100 python 2D matrix of zeroes
+    Creates a 100 by 100 2D matrix of zeroes
     """
     w, h = 100, 100
     mat = [[0 for x in range(w)] for y in range(h)]
