@@ -495,7 +495,7 @@ def control_robot(robot):
             Returns:        returns newly located viruses to the virusArray and the search
                             location to the searched locations list
         """
-         for i in instructionsList:
+        for i in instructionsList:
              if i == calc.moveEncoding.up:
                  step_north(1)
              elif i == calc.moveEncoding.right:
