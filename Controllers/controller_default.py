@@ -630,6 +630,7 @@ def control_robot(robot):
                 print(path)
         else:
             print("A path could not be calculated")
+        ###########
 
         #--Uses ComputeCost() to decide which adjacent node has the lowest cost--#
         LowestCostDirection = ["Direction", 999]
