@@ -49,6 +49,7 @@ class robotInheritence:
                                                 after a new packet is collected.
                         targetCoordinate    -   the position in the maze that the robot is trying to reach to
                                                 collect its target represented as an array in the form [X, Y].
+                        bugAvoidance        -   used to determine if the robot avoids bugs.
     """
     currentPacketNumber = 0
     currentFacingDirection = 1
@@ -62,6 +63,7 @@ class robotInheritence:
     searchMode = "Packet"
     numPacketsLeft = 0
     targetCoordinate = [0, 0]
+    bugAvoidance = True
 
 class node:
     """ Class:          node
@@ -404,9 +406,15 @@ def control_robot(robot):
         cost = d
         if bugonnode == True:
             if d >= 5:
-                cost = d+20
+                if robotProperties.bugAvoidance == True:
+                    cost = d+20
+                elif robotProperties.bugAvoidance == False:
+                    cost = d
             else:
-                cost = d+10
+                if robotProperties.bugAvoidance == True:
+                    cost = d+10
+                elif robotProperties.bugAvoidance == False:
+                    cost = d
         elif bugonnode == False:
             cost = d
         # d = abs(PacketPosition[0] - NodePosition[0]) + abs(PacketPosition[1] - NodePosition[1]) # depricated Manhattan distance equation
